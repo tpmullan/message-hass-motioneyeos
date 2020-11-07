@@ -19,6 +19,8 @@ type CameraConfig struct {
 	DeviceName        string
 	DeiceFriendlyName string
 	DeviceClass       string
+  Manufacturer      string
+  UniqueId          string
 }
 
 type MqttConfig struct {
@@ -32,10 +34,19 @@ type MqttConfig struct {
   Cameras           []CameraConfig
 }
 
+type deviceMessage struct {
+  Identifiers  []string `json:"identifiers"`
+  Name         string   `json:"name"`
+  Manufacturer string   `json:"manufacturer"`
+  Model        string   `json:"model"`
+}
+
 type ConfigMessage struct {
 	Name        string `json:"name"`
 	DeviceClass string `json:"device_class"`
 	StateTopic  string `json:"state_topic"`
+	UniqueId    string `json:"unique_id"`
+  Device      deviceMessage `json:"device"`
 }
 
 func main() {
@@ -106,7 +117,8 @@ func main() {
 	stateTopic := config.BaseTopic + "/binary_sensor/" + camera.DeviceName + "/state"
 	if config.AutoConfig {
 		configTopic := config.BaseTopic + "/binary_sensor/" + camera.DeviceName + "/config"
-		configMessage := ConfigMessage{camera.DeiceFriendlyName, camera.DeviceClass, stateTopic}
+    device := deviceMessage{[]string{camera.UniqueId}, camera.DeiceFriendlyName, camera.Manufacturer, "Motion Sensor"}
+		configMessage := ConfigMessage{camera.DeiceFriendlyName, camera.DeviceClass, stateTopic, camera.UniqueId, device}
 		jsonConfigMessage, err := json.Marshal(&configMessage)
 		if err != nil {
 			fmt.Fprint(os.Stderr, "json marshal failed: ", err)
